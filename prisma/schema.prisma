@@ -1,0 +1,22 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tugas {
+  id        Int      @id @default(autoincrement())
+  judul     String
+  matkul    String
+  deadline  DateTime @db.Date
+  selesai   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("tugas")
+}

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Task Tracker Kuliah - aplikasi CRUD tugas kuliah dengan Express dan JavaScript.">
+    <title>Task Tracker Kuliah</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/app.js" defer></script>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- ===== Header ===== -->
+        <header class="hero">
+            <span class="hero__badge">Pemrograman Web · Minggu 9</span>
+
+            <div class="hero__row">
+                <div class="hero__intro">
+                    <h1>Task Tracker <span>Kuliah</span></h1>
+                    <p>
+                        Catat, ubah, dan hapus tugas kuliah dalam satu tempat.
+                        Dibangun dengan Express, Prisma, dan Neon PostgreSQL sebagai
+                        backend serta HTML, CSS, dan JavaScript sebagai frontend.
+                    </p>
+                </div>
+
+                <div class="stats" aria-label="Statistik tugas">
+                    <div class="stat">
+                        <span class="stat__value" id="stat-total">0</span>
+                        <span class="stat__label">Total tugas</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat__value" id="stat-aktif">0</span>
+                        <span class="stat__label">Aktif</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat__value" id="stat-selesai">0</span>
+                        <span class="stat__label">Selesai</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="layout">
+
+            <!-- ===== Form tambah (POST) ===== -->
+            <section class="panel">
+                <div class="panel__head">
+                    <h2>Tambah Tugas</h2>
+                    <p>Isi form di bawah untuk mencatat tugas baru.</p>
+                </div>
+
+                <form id="form-tugas" novalidate>
+                    <div class="field">
+                        <label for="judul">Judul tugas</label>
+                        <input
+                            type="text"
+                            id="judul"
+                            name="judul"
+                            placeholder="Contoh: Membuat CRUD Express"
+                            maxlength="100"
+                            autocomplete="off"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label for="matkul">Mata kuliah</label>
+                        <select id="matkul" name="matkul" required>
+                            <option value="">Pilih mata kuliah</option>
+                            <option value="Pemrograman Web">Pemrograman Web</option>
+                            <option value="Basis Data">Basis Data</option>
+                            <option value="Algoritma dan Struktur Data">Algoritma dan Struktur Data</option>
+                            <option value="Jaringan Komputer">Jaringan Komputer</option>
+                            <option value="Sistem Operasi">Sistem Operasi</option>
+                            <option value="Kecerdasan Buatan">Kecerdasan Buatan</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="deadline">Deadline</label>
+                        <input type="date" id="deadline" name="deadline" required>
+                    </div>
+
+                    <button type="submit" class="btn btn--primary btn--block" id="tombol-tambah">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span class="btn__label">Tambah Tugas</span>
+                    </button>
+
+                    <p class="form-error" id="form-error" role="alert"></p>
+                </form>
+            </section>
+
+            <!-- ===== Daftar tugas (GET) ===== -->
+            <section class="panel panel--list">
+                <div class="list-head">
+                    <div>
+                        <h2>Daftar Tugas</h2>
+                        <p id="ringkasan">Memuat data tugas...</p>
+                    </div>
+
+                    <div class="toolbar">
+                        <div class="search">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+                                <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            <input
+                                type="search"
+                                id="pencarian"
+                                placeholder="Cari tugas atau matkul..."
+                                aria-label="Cari tugas"
+                                autocomplete="off"
+                            >
+                        </div>
+
+                        <div class="filter" role="group" aria-label="Filter status tugas">
+                            <button type="button" class="filter__btn is-active" data-filter="semua">Semua</button>
+                            <button type="button" class="filter__btn" data-filter="aktif">Aktif</button>
+                            <button type="button" class="filter__btn" data-filter="selesai">Selesai</button>
+                        </div>
+                    </div>
+                </div>
+
+                <ul id="daftar-tugas" class="task-list" aria-live="polite"></ul>
+            </section>
+
+        </main>
+
+        <footer class="footer">
+            <span>Tugas Pemrograman Web · Express + Prisma + Neon</span>
+            <span class="footer__dot" aria-hidden="true"></span>
+            <span>Data tersimpan di PostgreSQL</span>
+        </footer>
+
+    </div>
+
+    <!-- ===== Modal edit (PUT) ===== -->
+    <dialog id="modal-edit" class="modal" aria-labelledby="modal-judul">
+        <form id="form-edit" novalidate>
+            <div class="modal__head">
+                <div>
+                    <span class="eyebrow">Edit tugas</span>
+                    <h2 id="modal-judul">Ubah data tugas</h2>
+                </div>
+                <button type="button" class="icon-btn" id="tutup-modal" aria-label="Tutup dialog">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+
+            <input type="hidden" id="edit-id">
+
+            <div class="field">
+                <label for="edit-judul">Judul tugas</label>
+                <input type="text" id="edit-judul" maxlength="100" autocomplete="off" required>
+            </div>
+
+            <div class="field">
+                <label for="edit-matkul">Mata kuliah</label>
+                <select id="edit-matkul" required>
+                    <option value="">Pilih mata kuliah</option>
+                    <option value="Pemrograman Web">Pemrograman Web</option>
+                    <option value="Basis Data">Basis Data</option>
+                    <option value="Algoritma dan Struktur Data">Algoritma dan Struktur Data</option>
+                    <option value="Jaringan Komputer">Jaringan Komputer</option>
+                    <option value="Sistem Operasi">Sistem Operasi</option>
+                    <option value="Kecerdasan Buatan">Kecerdasan Buatan</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="edit-deadline">Deadline</label>
+                <input type="date" id="edit-deadline" required>
+            </div>
+
+            <label class="check-field" for="edit-selesai">
+                <input type="checkbox" id="edit-selesai">
+                Tandai tugas sudah selesai
+            </label>
+
+            <p class="form-error" id="edit-error" role="alert"></p>
+
+            <div class="modal__actions">
+                <button type="button" class="btn btn--ghost" id="batal-edit">Batal</button>
+                <button type="submit" class="btn btn--primary" id="simpan-edit">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M5 12.5 9.5 17 19 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="btn__label">Simpan Perubahan</span>
+                </button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- ===== Notifikasi ===== -->
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+    <noscript>
+        <p class="noscript">Aplikasi ini membutuhkan JavaScript untuk menampilkan dan mengelola data.</p>
+    </noscript>
+
+</body>
+</html>

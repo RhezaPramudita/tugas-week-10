@@ -1,0 +1,7 @@
+node_modules/
+dist/
+generated/
+.env
+.DS_Store
+npm-debug.log*
+tugas-minggu9.zip
